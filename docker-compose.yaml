@@ -1,0 +1,173 @@
+# docker-compose.yml pour microservices bibliothèques
+services:
+
+  # ================== EUREKA SERVER ==================
+  eureka-server:
+    build: ./eurika
+    container_name: eureka-service
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_APPLICATION_NAME: eureka-service
+    networks:
+      - biblio-network
+
+  # ================== GATEWAY ==================
+  gateway-service:
+    build: ./gateway
+    container_name: gateway-service
+    ports:
+      - "9999:9999"
+    depends_on:
+      - eureka-server
+    environment:
+      SPRING_APPLICATION_NAME: gateway-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka
+    networks:
+      - biblio-network
+
+  # ================== MYSQL DATABASES ==================
+  mysql-user:
+    image: mysql:8.0
+    container_name: mysql-user
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: db_user
+    networks:
+      - biblio-network
+    volumes:
+      - mysql-user-data:/var/lib/mysql
+
+  mysql-book:
+    image: mysql:8.0
+    container_name: mysql-book
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: db_book
+    networks:
+      - biblio-network
+    volumes:
+      - mysql-book-data:/var/lib/mysql
+
+  mysql-emprunter:
+    image: mysql:8.0
+    container_name: mysql-emprunter
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: db_emprunt
+    networks:
+      - biblio-network
+    volumes:
+      - mysql-emprunter-data:/var/lib/mysql
+
+  # ================== USER SERVICE ==================
+  user-service:
+    build: ./user
+    container_name: user-service
+    ports:
+    - "8082:8082"
+    depends_on:
+      - eureka-server
+      - mysql-user
+    environment:
+      SPRING_APPLICATION_NAME: user-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-user:3306/db_user?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+    networks:
+      - biblio-network
+
+  # ================== BOOK SERVICE ==================
+  book-service:
+    build: ./book
+    container_name: book-service
+    depends_on:
+      - eureka-server
+      - mysql-book
+    environment:
+      SPRING_APPLICATION_NAME: book-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-book:3306/db_book?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+    networks:
+      - biblio-network
+
+  # ================== EMPRUNT SERVICE ==================
+  emprunt-service:
+    build: ./emprunter
+    container_name: emprunt-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      - eureka-server
+      - mysql-emprunter
+      - kafka
+      - user-service
+      - book-service
+    environment:
+      SPRING_APPLICATION_NAME: emprunt-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-emprunter:3306/db_emprunt?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - biblio-network
+
+  # ================== NOTIFICATION SERVICE ==================
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification_service
+    depends_on:
+      - eureka-server
+      - kafka
+    environment:
+      SPRING_APPLICATION_NAME: notification-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - biblio-network
+  # ================== ZOOKEEPER ==================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - biblio-network
+
+  # ================== KAFKA ==================
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - biblio-network
+
+# ================== NETWORK ==================
+networks:
+  biblio-network:
+    driver: bridge
+
+# ================== VOLUMES ==================
+volumes:
+  mysql-user-data:
+  mysql-book-data:
+  mysql-emprunter-data:
