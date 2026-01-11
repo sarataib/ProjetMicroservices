@@ -263,14 +263,22 @@ docker logs -f notification_service
 
 ```
 Projet_Microservices/
-├── docker-compose.yml
-├── README.md
-├── eurika/
-├── gateway/
-├── user/
-├── book/
-├── emprunter/
-├── notification-service/
+├── docker-compose.yml          # Configuration Docker complète
+├── README.md                   # Ce fichier
+├── eureka/                     # Service de découverte
+├── gateway/                    # Gateway API
+├── user-service/               # Gestion des utilisateurs
+│   ├── src/main/resources/application.properties
+│   └── Dockerfile
+├── book-service/               # Gestion des livres
+│   ├── src/main/resources/application.properties
+│   └── Dockerfile
+├── emprunt-service/            # Gestion des emprunts + Kafka Producer
+│   ├── src/main/resources/application.properties
+│   └── Dockerfile
+└── notification-service/       # Service de notification Kafka Consumer
+    ├── src/main/resources/application.properties
+    └── Dockerfile
 ```
 
 ---
