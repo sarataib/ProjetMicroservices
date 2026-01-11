@@ -258,9 +258,10 @@ docker logs -f notification_service
 ```
 
  Exemple de log :
+<img width="207" height="53" alt="nc" src="https://github.com/user-attachments/assets/ea77aca1-361c-47c4-9c69-67ddd2b5b438" />
 
 ```
-[NOTIFICATION] Emprunt créé - userId=1, bookId=1
+
 ```
 
 ---
