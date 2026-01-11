@@ -256,15 +256,8 @@ docker exec kafka kafka-console-consumer \
 ```bash
 docker logs -f notification_service
 ```
+<img width="284" height="67" alt="messa" src="https://github.com/user-attachments/assets/5ade5365-0380-4386-8b6c-7cf18cab2196" />
 
- Exemple de log :
-<img width="207" height="53" alt="nc" src="https://github.com/user-attachments/assets/ea77aca1-361c-47c4-9c69-67ddd2b5b438" />
-
-```
-
-```
-
----
 
 ##  Structure du Projet
 
